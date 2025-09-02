@@ -504,7 +504,7 @@ async def get_gto_tasks():
     ]
     return {"tasks": tasks}
 
-# AI Mentor Chat
+# Enhanced AI Mentor Chat with bullet points
 @app.post("/api/chat/mentor")
 async def chat_with_mentor(data: dict):
     user_message = data.get("message")
@@ -515,17 +515,19 @@ async def chat_with_mentor(data: dict):
     
     User question: "{user_message}"
     
-    Provide helpful, motivational advice focusing on:
-    - Practical SSB preparation tips
-    - Building confidence and officer-like qualities  
-    - Addressing specific doubts or concerns
-    - Encouraging a positive mindset
+    Provide helpful, motivational advice in BULLET POINTS format for easy reading:
+    • Focus on practical SSB preparation tips
+    • Build confidence and officer-like qualities  
+    • Address specific doubts or concerns
+    • Encourage a positive mindset
+    • Provide actionable suggestions
     
-    Keep response conversational and under 200 words.
+    Structure your response with clear bullet points and keep it conversational yet informative, under 200 words.
+    Start with a brief greeting, then provide bullet points.
     """
     
     ai_response = await get_ai_response(
-        "You are a supportive SSB mentor with years of experience helping candidates succeed.",
+        "You are a supportive SSB mentor with years of experience helping candidates succeed. Always format responses in bullet points for easy reading.",
         mentor_prompt
     )
     
