@@ -215,30 +215,46 @@ async def get_ppdt_images():
 async def submit_ppdt_story(data: dict):
     user_story = data.get("story")
     image_id = data.get("image_id")
+    background = data.get("background", "")
+    num_characters = data.get("numCharacters", "")
+    gender = data.get("gender", "")
+    mood = data.get("mood", "")
+    age = data.get("age", "")
     
-    # AI evaluation and positive story generation
+    # Enhanced AI evaluation with PP&DT context and positive story generation
     evaluation_prompt = f"""
-    You are an SSB psychologist evaluating a PP&DT response. 
+    You are an experienced SSB psychologist evaluating a PP&DT response. 
     
     User's story: "{user_story}"
     Image ID: {image_id}
+    Context provided by candidate:
+    - Background: {background}
+    - Number of characters: {num_characters}
+    - Gender: {gender}
+    - Mood: {mood}  
+    - Age: {age}
     
+    EVALUATION:
     Please provide:
-    1. Brief evaluation of the story (personality insights, leadership qualities shown)
-    2. Areas for improvement
-    3. Score out of 10
-    
-    Then create your own POSITIVE story for the same image that:
-    - Starts with a clear REASON/motivation
-    - Has a specific GOAL the protagonist wants to achieve  
-    - Ends with a GREAT/positive outcome
-    - Shows leadership, problem-solving, and positive attitude
-    
-    Format your response as:
-    EVALUATION: [your evaluation and score]
+    • Brief evaluation of the story (personality insights, leadership qualities shown)
+    • How well they used the context they provided
+    • Areas for improvement
+    • Score out of 10
     
     POSITIVE STORY EXAMPLE:
-    [Your positive story here]
+    Now create your own POSITIVE story for the same image that:
+    • Starts with a clear REASON/motivation
+    • Has a specific GOAL the protagonist wants to achieve  
+    • Ends with a GREAT/positive outcome showing success
+    • Shows leadership, problem-solving, and positive attitude
+    • Uses similar context (background, characters, etc.)
+    
+    Format your response exactly as:
+    EVALUATION:
+    [Your detailed evaluation here]
+    
+    POSITIVE STORY EXAMPLE:
+    [Your positive story here with reason, goal, and great ending]
     """
     
     ai_response = await get_ai_response(
