@@ -806,6 +806,1124 @@ function PPDTPractice() {
   );
 }
 
+// OIR Practice Component
+function OIRPractice() {
+  const [questions, setQuestions] = useState([]);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [selectedAnswer, setSelectedAnswer] = useState(null);
+  const [feedback, setFeedback] = useState(null);
+  const [score, setScore] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchQuestions();
+  }, []);
+
+  const fetchQuestions = async () => {
+    try {
+      const response = await axios.get(`${BACKEND_URL}/api/oir/questions`);
+      setQuestions(response.data.questions);
+      setLoading(false);
+    } catch (error) {
+      toast.error('Failed to load questions');
+      setLoading(false);
+    }
+  };
+
+  const submitAnswer = async () => {
+    if (selectedAnswer === null) return;
+
+    try {
+      const response = await axios.post(`${BACKEND_URL}/api/oir/submit`, {
+        answer: selectedAnswer,
+        question_id: questions[currentQuestion].id,
+        correct_answer: questions[currentQuestion].correct_answer
+      });
+
+      setFeedback(response.data);
+      if (response.data.correct) {
+        setScore(score + 1);
+        toast.success('Correct answer!');
+      } else {
+        toast.error('Incorrect answer');
+      }
+    } catch (error) {
+      toast.error('Failed to submit answer');
+    }
+  };
+
+  const nextQuestion = () => {
+    if (currentQuestion < questions.length - 1) {
+      setCurrentQuestion(currentQuestion + 1);
+      setSelectedAnswer(null);
+      setFeedback(null);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div>
+        <Header />
+        <div className="container mx-auto px-6 py-8">
+          <div className="flex items-center justify-center h-64">
+            <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const question = questions[currentQuestion];
+
+  return (
+    <div>
+      <Header />
+      <div className="container mx-auto px-6 py-8 max-w-4xl">
+        <div className="mb-8">
+          <Button 
+            variant="ghost" 
+            onClick={() => window.location.href = '/'}
+            className="mb-4"
+          >
+            ← Back to Dashboard
+          </Button>
+          <h1 className="text-3xl font-bold text-slate-800 mb-2">OIR Practice</h1>
+          <p className="text-slate-600">Test your reasoning and intelligence skills</p>
+        </div>
+
+        <Card className="shadow-lg">
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle>Question {currentQuestion + 1} of {questions.length}</CardTitle>
+              <Badge variant="outline">Score: {score}/{questions.length}</Badge>
+            </div>
+            <Progress value={(currentQuestion / questions.length) * 100} className="w-full" />
+          </CardHeader>
+          
+          <CardContent className="p-6">
+            <div className="mb-6">
+              <h3 className="text-lg font-medium mb-4">{question.question}</h3>
+              
+              <div className="space-y-3">
+                {question.options.map((option, index) => (
+                  <Button
+                    key={index}
+                    variant={selectedAnswer === index ? "default" : "outline"}
+                    className="w-full text-left justify-start p-4"
+                    onClick={() => setSelectedAnswer(index)}
+                    disabled={feedback !== null}
+                  >
+                    {String.fromCharCode(65 + index)}. {option}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {!feedback && (
+              <Button 
+                onClick={submitAnswer}
+                disabled={selectedAnswer === null}
+                className="w-full bg-blue-600 hover:bg-blue-700"
+              >
+                Submit Answer
+              </Button>
+            )}
+
+            {feedback && (
+              <div className="space-y-4">
+                <Alert className={feedback.correct ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"}>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>{feedback.correct ? "Correct!" : "Incorrect"}</AlertTitle>
+                  <AlertDescription className="mt-2">
+                    <strong>Explanation:</strong> {question.explanation}
+                  </AlertDescription>
+                </Alert>
+                
+                <Alert className="border-blue-200 bg-blue-50">
+                  <Brain className="h-4 w-4" />
+                  <AlertTitle>AI Feedback</AlertTitle>
+                  <AlertDescription className="mt-2 whitespace-pre-line">
+                    {feedback.feedback}
+                  </AlertDescription>
+                </Alert>
+
+                {currentQuestion < questions.length - 1 ? (
+                  <Button onClick={nextQuestion} className="w-full">
+                    Next Question
+                  </Button>
+                ) : (
+                  <div className="text-center">
+                    <h3 className="text-xl font-semibold mb-2">Practice Complete!</h3>
+                    <p className="text-slate-600 mb-4">Final Score: {score}/{questions.length} ({Math.round((score/questions.length)*100)}%)</p>
+                    <Button onClick={() => window.location.href = '/'}>
+                      Return to Dashboard
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+// TAT Practice Component
+function TATPractice() {
+  const [scenarios, setScenarios] = useState([]);
+  const [currentScenario, setCurrentScenario] = useState(0);
+  const [response, setResponse] = useState('');
+  const [feedback, setFeedback] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    fetchScenarios();
+  }, []);
+
+  const fetchScenarios = async () => {
+    try {
+      const response = await axios.get(`${BACKEND_URL}/api/tat/scenarios`);
+      setScenarios(response.data.scenarios);
+      setLoading(false);
+    } catch (error) {
+      toast.error('Failed to load scenarios');
+      setLoading(false);
+    }
+  };
+
+  const submitResponse = async () => {
+    if (!response.trim()) {
+      toast.error('Please write a response first');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const result = await axios.post(`${BACKEND_URL}/api/tat/submit`, {
+        response: response,
+        scenario_id: scenarios[currentScenario].id
+      });
+
+      setFeedback(result.data);
+      toast.success('Response submitted for evaluation');
+    } catch (error) {
+      toast.error('Failed to submit response');
+    }
+    setSubmitting(false);
+  };
+
+  if (loading) {
+    return (
+      <div>
+        <Header />
+        <div className="container mx-auto px-6 py-8">
+          <div className="flex items-center justify-center h-64">
+            <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <Header />
+      <div className="container mx-auto px-6 py-8 max-w-4xl">
+        <div className="mb-8">
+          <Button 
+            variant="ghost" 
+            onClick={() => window.location.href = '/'}
+            className="mb-4"
+          >
+            ← Back to Dashboard
+          </Button>
+          <h1 className="text-3xl font-bold text-slate-800 mb-2">TAT Practice</h1>
+          <p className="text-slate-600">Thematic Apperception Test - Write your response</p>
+        </div>
+
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle>Scenario {currentScenario + 1} of {scenarios.length}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <p className="text-lg">{scenarios[currentScenario]?.scenario}</p>
+              </div>
+              
+              <Textarea
+                placeholder="Write your response here..."
+                value={response}
+                onChange={(e) => setResponse(e.target.value)}
+                className="min-h-48"
+                disabled={feedback !== null}
+              />
+              
+              {!feedback && (
+                <Button 
+                  onClick={submitResponse}
+                  disabled={submitting || !response.trim()}
+                  className="w-full"
+                >
+                  {submitting ? 'Submitting...' : 'Submit Response'}
+                </Button>
+              )}
+              
+              {feedback && (
+                <Alert>
+                  <Brain className="h-4 w-4" />
+                  <AlertTitle>AI Feedback</AlertTitle>
+                  <AlertDescription className="mt-2 whitespace-pre-line">
+                    {feedback.feedback}
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+// WAT Practice Component
+function WATPractice() {
+  const [words, setWords] = useState([]);
+  const [responses, setResponses] = useState({});
+  const [feedback, setFeedback] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchWords();
+  }, []);
+
+  const fetchWords = async () => {
+    try {
+      const response = await axios.get(`${BACKEND_URL}/api/wat/words`);
+      setWords(response.data.words);
+      setLoading(false);
+    } catch (error) {
+      toast.error('Failed to load words');
+      setLoading(false);
+    }
+  };
+
+  const submitResponses = async () => {
+    const responseArray = words.map(word => ({
+      word: word,
+      response: responses[word] || ''
+    }));
+
+    try {
+      const result = await axios.post(`${BACKEND_URL}/api/wat/submit`, {
+        responses: responseArray
+      });
+
+      setFeedback(result.data);
+      toast.success('Responses submitted for evaluation');
+    } catch (error) {
+      toast.error('Failed to submit responses');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div>
+        <Header />
+        <div className="container mx-auto px-6 py-8">
+          <div className="flex items-center justify-center h-64">
+            <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <Header />
+      <div className="container mx-auto px-6 py-8 max-w-4xl">
+        <div className="mb-8">
+          <Button 
+            variant="ghost" 
+            onClick={() => window.location.href = '/'}
+            className="mb-4"
+          >
+            ← Back to Dashboard
+          </Button>
+          <h1 className="text-3xl font-bold text-slate-800 mb-2">WAT Practice</h1>
+          <p className="text-slate-600">Word Association Test - Write your first thoughts</p>
+        </div>
+
+        <Card className="shadow-lg">
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {words.map((word, index) => (
+                <div key={index} className="space-y-2">
+                  <Label>{word}</Label>
+                  <Input
+                    placeholder="Your association..."
+                    value={responses[word] || ''}
+                    onChange={(e) => setResponses({...responses, [word]: e.target.value})}
+                    disabled={feedback !== null}
+                  />
+                </div>
+              ))}
+            </div>
+            
+            {!feedback && (
+              <Button 
+                onClick={submitResponses}
+                className="w-full mt-6"
+              >
+                Submit All Responses
+              </Button>
+            )}
+            
+            {feedback && (
+              <Alert className="mt-6">
+                <Brain className="h-4 w-4" />
+                <AlertTitle>AI Analysis</AlertTitle>
+                <AlertDescription className="mt-2 whitespace-pre-line">
+                  {feedback.feedback}
+                </AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+// SRT Practice Component
+function SRTPractice() {
+  const [situations, setSituations] = useState([]);
+  const [responses, setResponses] = useState({});
+  const [feedback, setFeedback] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchSituations();
+  }, []);
+
+  const fetchSituations = async () => {
+    try {
+      const response = await axios.get(`${BACKEND_URL}/api/srt/situations`);
+      setSituations(response.data.situations);
+      setLoading(false);
+    } catch (error) {
+      toast.error('Failed to load situations');
+      setLoading(false);
+    }
+  };
+
+  const submitResponses = async () => {
+    const responseArray = situations.map(situation => ({
+      situation_id: situation.id,
+      response: responses[situation.id] || ''
+    }));
+
+    try {
+      const result = await axios.post(`${BACKEND_URL}/api/srt/submit`, {
+        responses: responseArray
+      });
+
+      setFeedback(result.data);
+      toast.success('Responses submitted for evaluation');
+    } catch (error) {
+      toast.error('Failed to submit responses');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div>
+        <Header />
+        <div className="container mx-auto px-6 py-8">
+          <div className="flex items-center justify-center h-64">
+            <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <Header />
+      <div className="container mx-auto px-6 py-8 max-w-4xl">
+        <div className="mb-8">
+          <Button 
+            variant="ghost" 
+            onClick={() => window.location.href = '/'}
+            className="mb-4"
+          >
+            ← Back to Dashboard
+          </Button>
+          <h1 className="text-3xl font-bold text-slate-800 mb-2">SRT Practice</h1>
+          <p className="text-slate-600">Situation Reaction Test - Quick decision making</p>
+        </div>
+
+        <Card className="shadow-lg">
+          <CardContent className="p-6">
+            <div className="space-y-6">
+              {situations.map((situation, index) => (
+                <div key={situation.id} className="space-y-2">
+                  <Label className="text-base font-medium">Situation {index + 1}</Label>
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <p>{situation.situation}</p>
+                  </div>
+                  <Textarea
+                    placeholder="Your reaction..."
+                    value={responses[situation.id] || ''}
+                    onChange={(e) => setResponses({...responses, [situation.id]: e.target.value})}
+                    disabled={feedback !== null}
+                    className="min-h-24"
+                  />
+                </div>
+              ))}
+            </div>
+            
+            {!feedback && (
+              <Button 
+                onClick={submitResponses}
+                className="w-full mt-6"
+              >
+                Submit All Responses
+              </Button>
+            )}
+            
+            {feedback && (
+              <Alert className="mt-6">
+                <Brain className="h-4 w-4" />
+                <AlertTitle>AI Analysis</AlertTitle>
+                <AlertDescription className="mt-2 whitespace-pre-line">
+                  {feedback.feedback}
+                </AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+// Interview Simulator Component
+function InterviewSimulator() {
+  const [questions, setQuestions] = useState([]);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [answer, setAnswer] = useState('');
+  const [feedback, setFeedback] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    startInterview();
+  }, []);
+
+  const startInterview = async () => {
+    try {
+      const response = await axios.post(`${BACKEND_URL}/api/interview/start`);
+      setQuestions(response.data.questions);
+      setLoading(false);
+    } catch (error) {
+      toast.error('Failed to start interview');
+      setLoading(false);
+    }
+  };
+
+  const submitAnswer = async () => {
+    if (!answer.trim()) {
+      toast.error('Please provide an answer');
+      return;
+    }
+
+    try {
+      const result = await axios.post(`${BACKEND_URL}/api/interview/submit`, {
+        question: questions[currentQuestion],
+        answer: answer
+      });
+
+      setFeedback(result.data);
+      toast.success('Answer submitted');
+    } catch (error) {
+      toast.error('Failed to submit answer');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div>
+        <Header />
+        <div className="container mx-auto px-6 py-8">
+          <div className="flex items-center justify-center h-64">
+            <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <Header />
+      <div className="container mx-auto px-6 py-8 max-w-4xl">
+        <div className="mb-8">
+          <Button 
+            variant="ghost" 
+            onClick={() => window.location.href = '/'}
+            className="mb-4"
+          >
+            ← Back to Dashboard
+          </Button>
+          <h1 className="text-3xl font-bold text-slate-800 mb-2">Interview Simulator</h1>
+          <p className="text-slate-600">Practice with AI-powered mock interviews</p>
+        </div>
+
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle>Question {currentQuestion + 1} of {questions.length}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <p className="text-lg font-medium">{questions[currentQuestion]}</p>
+              </div>
+              
+              <Textarea
+                placeholder="Your answer..."
+                value={answer}
+                onChange={(e) => setAnswer(e.target.value)}
+                className="min-h-32"
+                disabled={feedback !== null}
+              />
+              
+              {!feedback && (
+                <Button 
+                  onClick={submitAnswer}
+                  disabled={!answer.trim()}
+                  className="w-full"
+                >
+                  Submit Answer
+                </Button>
+              )}
+              
+              {feedback && (
+                <Alert>
+                  <Mic className="h-4 w-4" />
+                  <AlertTitle>Interview Feedback</AlertTitle>
+                  <AlertDescription className="mt-2 whitespace-pre-line">
+                    {feedback.feedback}
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+// GTO Guidance Component
+function GTOGuidance() {
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchTasks();
+  }, []);
+
+  const fetchTasks = async () => {
+    try {
+      const response = await axios.get(`${BACKEND_URL}/api/gto/tasks`);
+      setTasks(response.data.tasks);
+      setLoading(false);
+    } catch (error) {
+      toast.error('Failed to load GTO tasks');
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div>
+        <Header />
+        <div className="container mx-auto px-6 py-8">
+          <div className="flex items-center justify-center h-64">
+            <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <Header />
+      <div className="container mx-auto px-6 py-8 max-w-4xl">
+        <div className="mb-8">
+          <Button 
+            variant="ghost" 
+            onClick={() => window.location.href = '/'}
+            className="mb-4"
+          >
+            ← Back to Dashboard
+          </Button>
+          <h1 className="text-3xl font-bold text-slate-800 mb-2">GTO Task Guidance</h1>
+          <p className="text-slate-600">Learn strategies for Group Testing Officer tasks</p>
+        </div>
+
+        <div className="space-y-6">
+          {tasks.map((task, index) => (
+            <Card key={task.id} className="shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Users className="h-6 w-6 mr-2 text-blue-600" />
+                  {task.title}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-semibold text-gray-800">Description:</h4>
+                    <p className="text-gray-600">{task.description}</p>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-semibold text-green-800">Strategy:</h4>
+                    <p className="text-green-700">{task.strategy}</p>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-semibold text-red-800">Common Mistakes:</h4>
+                    <p className="text-red-700">{task.common_mistakes}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Defense GK Quiz Component
+function DefenseGKQuiz() {
+  const [questions, setQuestions] = useState([]);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [selectedAnswer, setSelectedAnswer] = useState(null);
+  const [score, setScore] = useState(0);
+  const [showResult, setShowResult] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchQuestions();
+  }, []);
+
+  const fetchQuestions = async () => {
+    try {
+      const response = await axios.get(`${BACKEND_URL}/api/defense-gk/quiz`);
+      setQuestions(response.data.questions);
+      setLoading(false);
+    } catch (error) {
+      toast.error('Failed to load quiz questions');
+      setLoading(false);
+    }
+  };
+
+  const submitAnswer = () => {
+    if (selectedAnswer === questions[currentQuestion].correct_answer) {
+      setScore(score + 1);
+      toast.success('Correct!');
+    } else {
+      toast.error('Incorrect');
+    }
+
+    if (currentQuestion < questions.length - 1) {
+      setCurrentQuestion(currentQuestion + 1);
+      setSelectedAnswer(null);
+    } else {
+      setShowResult(true);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div>
+        <Header />
+        <div className="container mx-auto px-6 py-8">
+          <div className="flex items-center justify-center h-64">
+            <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (showResult) {
+    return (
+      <div>
+        <Header />
+        <div className="container mx-auto px-6 py-8 max-w-4xl">
+          <Card className="shadow-lg text-center">
+            <CardContent className="p-8">
+              <h2 className="text-2xl font-bold mb-4">Quiz Complete!</h2>
+              <p className="text-xl mb-4">Your Score: {score}/{questions.length}</p>
+              <p className="text-lg mb-6">Percentage: {Math.round((score/questions.length)*100)}%</p>
+              <Button onClick={() => window.location.href = '/'}>
+                Return to Dashboard
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  const question = questions[currentQuestion];
+
+  return (
+    <div>
+      <Header />
+      <div className="container mx-auto px-6 py-8 max-w-4xl">
+        <div className="mb-8">
+          <Button 
+            variant="ghost" 
+            onClick={() => window.location.href = '/'}
+            className="mb-4"
+          >
+            ← Back to Dashboard
+          </Button>
+          <h1 className="text-3xl font-bold text-slate-800 mb-2">Defense GK Quiz</h1>
+          <p className="text-slate-600">Test your defense knowledge</p>
+        </div>
+
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle>Question {currentQuestion + 1} of {questions.length}</CardTitle>
+            <Progress value={(currentQuestion / questions.length) * 100} />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">{question.question}</h3>
+              
+              <div className="space-y-2">
+                {question.options.map((option, index) => (
+                  <Button
+                    key={index}
+                    variant={selectedAnswer === index ? "default" : "outline"}
+                    className="w-full text-left justify-start"
+                    onClick={() => setSelectedAnswer(index)}
+                  >
+                    {String.fromCharCode(65 + index)}. {option}
+                  </Button>
+                ))}
+              </div>
+              
+              <Button 
+                onClick={submitAnswer}
+                disabled={selectedAnswer === null}
+                className="w-full"
+              >
+                Submit Answer
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+// Current Affairs Quiz Component
+function CurrentAffairsQuiz() {
+  const [questions, setQuestions] = useState([]);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [selectedAnswer, setSelectedAnswer] = useState(null);
+  const [score, setScore] = useState(0);
+  const [showResult, setShowResult] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchQuestions();
+  }, []);
+
+  const fetchQuestions = async () => {
+    try {
+      const response = await axios.get(`${BACKEND_URL}/api/current-affairs/quiz`);
+      setQuestions(response.data.questions);
+      setLoading(false);
+    } catch (error) {
+      toast.error('Failed to load quiz questions');
+      setLoading(false);
+    }
+  };
+
+  const submitAnswer = () => {
+    if (selectedAnswer === questions[currentQuestion].correct_answer) {
+      setScore(score + 1);
+      toast.success('Correct!');
+    } else {
+      toast.error('Incorrect');
+    }
+
+    if (currentQuestion < questions.length - 1) {
+      setCurrentQuestion(currentQuestion + 1);
+      setSelectedAnswer(null);
+    } else {
+      setShowResult(true);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div>
+        <Header />
+        <div className="container mx-auto px-6 py-8">
+          <div className="flex items-center justify-center h-64">
+            <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (showResult) {
+    return (
+      <div>
+        <Header />
+        <div className="container mx-auto px-6 py-8 max-w-4xl">
+          <Card className="shadow-lg text-center">
+            <CardContent className="p-8">
+              <h2 className="text-2xl font-bold mb-4">Quiz Complete!</h2>
+              <p className="text-xl mb-4">Your Score: {score}/{questions.length}</p>
+              <p className="text-lg mb-6">Percentage: {Math.round((score/questions.length)*100)}%</p>
+              <Button onClick={() => window.location.href = '/'}>
+                Return to Dashboard
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  const question = questions[currentQuestion];
+
+  return (
+    <div>
+      <Header />
+      <div className="container mx-auto px-6 py-8 max-w-4xl">
+        <div className="mb-8">
+          <Button 
+            variant="ghost" 
+            onClick={() => window.location.href = '/'}
+            className="mb-4"
+          >
+            ← Back to Dashboard
+          </Button>
+          <h1 className="text-3xl font-bold text-slate-800 mb-2">Current Affairs Quiz</h1>
+          <p className="text-slate-600">Stay updated with latest affairs</p>
+        </div>
+
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle>Question {currentQuestion + 1} of {questions.length}</CardTitle>
+            <Progress value={(currentQuestion / questions.length) * 100} />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">{question.question}</h3>
+              
+              <div className="space-y-2">
+                {question.options.map((option, index) => (
+                  <Button
+                    key={index}
+                    variant={selectedAnswer === index ? "default" : "outline"}
+                    className="w-full text-left justify-start"
+                    onClick={() => setSelectedAnswer(index)}
+                  >
+                    {String.fromCharCode(65 + index)}. {option}
+                  </Button>
+                ))}
+              </div>
+              
+              <Button 
+                onClick={submitAnswer}
+                disabled={selectedAnswer === null}
+                className="w-full"
+              >
+                Submit Answer
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+// Progress Tracker Component
+function ProgressTracker() {
+  const { user } = React.useContext(AuthContext);
+  const [progress, setProgress] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchProgress();
+  }, []);
+
+  const fetchProgress = async () => {
+    try {
+      const response = await axios.get(`${BACKEND_URL}/api/progress/${user?.id || 'demo'}`);
+      setProgress(response.data);
+      setLoading(false);
+    } catch (error) {
+      toast.error('Failed to load progress data');
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div>
+        <Header />
+        <div className="container mx-auto px-6 py-8">
+          <div className="flex items-center justify-center h-64">
+            <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <Header />
+      <div className="container mx-auto px-6 py-8 max-w-6xl">
+        <div className="mb-8">
+          <Button 
+            variant="ghost" 
+            onClick={() => window.location.href = '/'}
+            className="mb-4"
+          >
+            ← Back to Dashboard
+          </Button>
+          <h1 className="text-3xl font-bold text-slate-800 mb-2">Progress Tracker</h1>
+          <p className="text-slate-600">Monitor your SSB preparation journey</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Zap className="h-5 w-5 mr-2 text-orange-600" />
+                Practice Streak
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold text-orange-600">{progress?.practice_streak} days</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Target className="h-5 w-5 mr-2 text-blue-600" />
+                Total Sessions
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold text-blue-600">{progress?.total_sessions}</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <BarChart3 className="h-5 w-5 mr-2 text-green-600" />
+                Average Scores
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {progress?.average_scores && Object.entries(progress.average_scores).map(([test, score]) => (
+                  <div key={test} className="flex justify-between">
+                    <span>{test}:</span>
+                    <span className="font-semibold">{score}%</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Star className="h-5 w-5 mr-2 text-yellow-600" />
+                Strengths
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {progress?.strengths?.map((strength, index) => (
+                  <Badge key={index} variant="secondary" className="mr-2">
+                    {strength}
+                  </Badge>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <AlertCircle className="h-5 w-5 mr-2 text-red-600" />
+                Areas for Improvement
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {progress?.areas_for_improvement?.map((area, index) => (
+                  <Badge key={index} variant="outline" className="mr-2">
+                    {area}
+                  </Badge>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <BookOpen className="h-5 w-5 mr-2 text-purple-600" />
+              Recommendations
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {progress?.next_recommendations?.map((rec, index) => (
+                <div key={index} className="flex items-start">
+                  <CheckCircle className="h-4 w-4 mr-2 mt-1 text-green-600" />
+                  <span>{rec}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
 // Enhanced Mentor Chat Component with bullet points
 function MentorChat() {
   const [messages, setMessages] = useState([
