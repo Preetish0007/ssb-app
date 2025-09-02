@@ -164,49 +164,49 @@ async def submit_oir_answer(data: dict):
         "feedback": ai_feedback
     }
 
-# PP&DT Endpoints
+# Enhanced PP&DT Endpoints with black and white hazy images
 @app.get("/api/ppdt/images")
 async def get_ppdt_images():
     images = [
         {
             "id": "ppdt_1",
-            "url": "https://images.unsplash.com/photo-1724624119112-c55f10f123c2",
-            "description": "Dark stairway with shadows"
+            "url": "https://images.unsplash.com/photo-1640286032211-db0f59a828b9?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2NDN8MHwxfHNlYXJjaHwyfHxibGFjayUyMHdoaXRlJTIwaGF6eXxlbnwwfHx8YmxhY2tfYW5kX3doaXRlfDE3NTY3OTEzNTl8MA&ixlib=rb-4.1.0&q=85",
+            "description": "Car in foggy conditions - atmospheric"
         },
         {
             "id": "ppdt_2", 
-            "url": "https://images.unsplash.com/photo-1731780189874-abadf8ff6c9e",
-            "description": "Night store front with mysterious lighting"
+            "url": "https://images.unsplash.com/photo-1710839971665-614255a5d0a6?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2NDN8MHwxfHNlYXJjaHwzfHxibGFjayUyMHdoaXRlJTIwaGF6eXxlbnwwfHx8YmxhY2tfYW5kX3doaXRlfDE3NTY3OTEzNTl8MA&ixlib=rb-4.1.0&q=85",
+            "description": "Flower in vase - soft ambiguous"
         },
         {
             "id": "ppdt_3",
-            "url": "https://images.unsplash.com/photo-1647960611705-c300dab7da8f", 
-            "description": "People on rooftop - ambiguous situation"
+            "url": "https://images.unsplash.com/photo-1564537150296-07c166b5049d?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2NDN8MHwxfHNlYXJjaHw0fHxibGFjayUyMHdoaXRlJTIwaGF6eXxlbnwwfHx8YmxhY2tfYW5kX3doaXRlfDE3NTY3OTEzNTl8MA&ixlib=rb-4.1.0&q=85", 
+            "description": "Smoking man - atmospheric"
         },
         {
             "id": "ppdt_4",
-            "url": "https://images.pexels.com/photos/6036202/pexels-photo-6036202.jpeg",
-            "description": "Underwater/abstract blue scene"
+            "url": "https://images.pexels.com/photos/9665195/pexels-photo-9665195.jpeg",
+            "description": "Atmospheric pexels image"
         },
         {
             "id": "ppdt_5",
-            "url": "https://images.unsplash.com/photo-1514472532243-4b98ecca4704",
-            "description": "Foggy mountain landscape"
+            "url": "https://images.unsplash.com/photo-1543572974-ab8f3d347ccb?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2Mzl8MHwxfHNlYXJjaHwxfHxtb25vY2hyb21lJTIwYXRtb3NwaGVyaWN8ZW58MHx8fGJsYWNrX2FuZF93aGl0ZXwxNzU2NzkxMzY2fDA&ixlib=rb-4.1.0&q=85",
+            "description": "Hazy trees scene - perfect atmospheric"
         },
         {
             "id": "ppdt_6",
-            "url": "https://images.unsplash.com/photo-1705391898156-6506f88f4386", 
-            "description": "Blurry hazy texture"
+            "url": "https://images.unsplash.com/photo-1603252059794-03f65d8ccbd4?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2Mzl8MHwxfHNlYXJjaHwyfHxtb25vY2hyb21lJTIwYXRtb3NwaGVyaWN8ZW58MHx8fGJsYWNrX2FuZF93aGl0ZXwxNzU2NzkxMzY2fDA&ixlib=rb-4.1.0&q=85", 
+            "description": "Creepy house - excellent for story creation"
         },
         {
             "id": "ppdt_7",
-            "url": "https://images.pexels.com/photos/1292115/pexels-photo-1292115.jpeg",
-            "description": "Misty forest landscape"
+            "url": "https://images.unsplash.com/photo-1715759406117-76aeee4281a8?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2Mzl8MHwxfHNlYXJjaHwzfHxtb25vY2hyb21lJTIwYXRtb3NwaGVyaWN8ZW58MHx8fGJsYWNrX2FuZF93aGl0ZXwxNzU2NzkxMzY2fDA&ixlib=rb-4.1.0&q=85",
+            "description": "Abandoned building - atmospheric decay"
         },
         {
             "id": "ppdt_8",
-            "url": "https://images.pexels.com/photos/7640415/pexels-photo-7640415.jpeg",
-            "description": "Person in challenging situation"
+            "url": "https://images.unsplash.com/photo-1587723354049-ff731dabf35f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2Mzl8MHwxfHNlYXJjaHw0fHxtb25vY2hyb21lJTIwYXRtb3NwaGVyaWN8ZW58MHx8fGJsYWNrX2FuZF93aGl0ZXwxNzU2NzkxMzY2fDA&ixlib=rb-4.1.0&q=85",
+            "description": "Lonely mountain hut - evocative"
         }
     ]
     return {"images": images}
